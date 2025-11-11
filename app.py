@@ -99,6 +99,11 @@ def create_app():
                 data = request.json if request.is_json else {}
                 # Use _cloud_job_id from payload if available (for cloud jobs), otherwise generate new UUID
                 job_id = data.pop('_cloud_job_id', None) or str(uuid.uuid4())
+
+                # Extract disable_cloud_job from payload for conditional logic and remove it
+                # to prevent validation errors in all processing modes
+                disable_cloud_job = data.pop('disable_cloud_job', None)
+
                 pid = os.getpid()  # Get PID for non-queued tasks
                 start_time = time.time()
 
@@ -152,7 +157,7 @@ def create_app():
 
                     return response_obj, response[2]
 
-                if os.environ.get("GCP_JOB_NAME") and data.get("webhook_url") and not data.get("disable_cloud_job"):
+                if os.environ.get("GCP_JOB_NAME") and data.get("webhook_url") and not disable_cloud_job:
                     try:
                         # Create enhanced payload with original job_id for cloud jobs
                         cloud_payload = data.copy()
